@@ -1,0 +1,16 @@
+[package]
+name = "bili-api-authentication"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = { version = "0.8" }
+sha2 = { version = "0.10" }
+hmac = { version = "0.12" }
+md5 = {version = "0.7" }
+
+[[example]]
+name = "auth"
+path = "examples/auth.rs"
