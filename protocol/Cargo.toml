@@ -1,0 +1,17 @@
+[package]
+name = "bili-danmaku-protocol"
+version = "0.1.0"
+edition = "2021"
+authors = ["Code Monad",]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+flate2 = "1.0"
+
+[[example]]
+name = "simple_unpack"
+path = "examples/simple_unpack.rs"
+
+[[example]]
+name = "encode_packet"
+path = "examples/encode_packet.rs"
