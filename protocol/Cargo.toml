@@ -1,5 +1,5 @@
 [package]
-name = "bili-danmaku-protocol"
+name = "bili-api-danmaku-protocol"
 version = "0.1.0"
 edition = "2021"
 authors = ["Code Monad",]

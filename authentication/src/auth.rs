@@ -2,7 +2,7 @@ use crate::gen_authorization_input_string;
 use hmac::{Hmac, Mac};
 use rand::Rng;
 use sha2::Sha256;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Helper class that using for generating signatures when interacting with bili's open-live api
@@ -25,6 +25,25 @@ impl Authenticator {
         } else {
             None
         }
+    }
+
+
+    /// Generates the full header, also filled the `x-bili-content-md5` filed
+    /// In production, this is always the recommended operation to use
+    /// Other functions are more line inner verbose steps
+    pub fn build_header(&self, content: &[u8]) -> BTreeMap<&str, String> {
+        let mut result = self._build_map_inner();
+        result.insert("x-bili-content-md5", format!("{:x}", md5::compute(content)));
+        self.gen_auth_header(&mut result);
+        result.insert("Accept", "application/json".to_string());
+        result.insert("Content-Type", "application/json".to_string());
+        result
+    }
+
+    /// Helper for generates HeadersMap for get Danmaku WebsocketInfo
+    /// The endpoint is "https://live-open.biliapi.com/v1/common/websocketInfo"
+    pub fn auth_room(&self, room_id: u64) -> BTreeMap<&str, String> {
+        self.build_header(Self::danmaku_info_request_body(room_id).as_bytes())
     }
 
     /// Set the access key
@@ -52,15 +71,13 @@ impl Authenticator {
     }
 
     // Build a map for generating authorization string
-    fn _build_map_inner(&self) -> HashMap<&str, String> {
-        HashMap::from([
-            ("Accept", "application/json".to_string()),
-            ("Content-Type", "application/json".to_string()),
+    fn _build_map_inner(&self) -> BTreeMap<&str, String> {
+        BTreeMap::from([
             ("x-bili-signature-method", "HMAC-SHA256".to_string()),
             ("x-bili-signature-version", "1.0".to_string()),
             (
                 "x-bili-signature-nonce",
-                format!("{:016}", rand::thread_rng().gen::<u32>()),
+                format!("{}", rand::thread_rng().gen_range(1..100000) + SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()),
             ),
             (
                 "x-bili-timestamp",
@@ -76,30 +93,19 @@ impl Authenticator {
 
     /// Generates the signature string for access bilibili's openapi endpoints
     /// Check https://open-live.bilibili.com/document/doc&tool/auth.html#%E7%94%9F%E6%88%90%E7%AD%BE%E5%90%8D
-    pub fn signature(&self, header_map: &HashMap<&str, String>) -> String {
+    pub fn signature(&self, header_map: &BTreeMap<&str, String>) -> String {
         let mut mac = self.hmac.clone();
         mac.update(gen_authorization_input_string(header_map).as_bytes());
         format!("{:x}", mac.finalize().into_bytes())
     }
 
     /// Generates the contents body requesting for a LiveRoom's danmaku info
-    pub fn request_body(room_id: u64) -> String {
-        format!("{{room_id: {}}}", room_id)
+    pub fn danmaku_info_request_body(room_id: u64) -> String {
+        format!("{{\"room_id\": {}}}", room_id)
     }
 
-    /// Get a HashMap that contains all HTTP fields needed to authenticate
-    pub fn gen_auth_header(&self) -> HashMap<&str, String> {
-        let mut result = self._build_map_inner();
-        result.insert("Authorization", self.signature(&result));
-        result
-    }
-
-    /// Generates the full header, also filled the `x-bili-content-md5` filed
-    /// In production, this is always the recommended operation to use
-    /// Other functions are more line inner verbose steps
-    pub fn build_header(&self, content: &[u8]) -> HashMap<&str, String> {
-        let mut result = self.gen_auth_header();
-        result.insert("x-bili-content-md5", format!("{:x}", md5::compute(content)));
-        result
+    /// Updates the Headers HashMap that contains all HTTP fields needed to authenticate
+    pub fn gen_auth_header(&self, headers: &mut BTreeMap<&str, String> ) {
+        headers.insert("Authorization", self.signature(&headers));
     }
 }

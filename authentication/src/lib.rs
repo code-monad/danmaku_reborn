@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 mod auth;
 pub use auth::*;
 
-pub fn gen_authorization_input_string(header_map: &HashMap<&str, String>) -> String {
+pub fn gen_authorization_input_string(header_map: &BTreeMap<&str, String>) -> String {
     let headers_str = header_map
         .iter()
         .map(|(key, value)| format!("{}:{}\n", key, value))

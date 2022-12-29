@@ -3,7 +3,7 @@ use bili_danmaku_protocol::packet::{Packet, RawPacket};
 
 fn main() {
     let test_raw_header: [u8;16] = [
-        0,0,0,255,
+        0,0,0,16,
         0,16,
         0,0,
         0,0,0,2,
